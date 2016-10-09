@@ -1,0 +1,75 @@
+# coding = utf-8
+import urllib.request
+import re
+
+def encoding(data):
+    types = ['utf-8','gb2312','gbk','iso-8859-1']   #可以添加其他字符编码
+    for type in types:
+        try:
+            return data.decode(type)
+        except:
+            continue
+        return None
+
+file = open('D:\Dalunlun\Documents\Python\problem.txt', 'w')
+header = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36 QIHU 360SE'
+n = 1000
+while n <= 5932:
+    weburl = 'http://acm.hdu.edu.cn/showproblem.php?pid=' + str(n)
+    n += 1
+    req = urllib.request.Request(weburl)
+    req.add_header('User-Agent', header)
+    webPage = urllib.request.urlopen(req)
+    data = webPage.read()
+    data = encoding(data)
+    # print(data)
+    matching = '<h1 style=\'color:#1A5CC8\'>([\s\S]*)<center style=\'font-size:15px;font-family:Arial;font-weight:'
+    reURL = re.compile(matching)
+    problems = reURL.findall(data)
+    # print(problems)
+    for problem in problems:
+        # print(problem)
+        problem = problem.replace('<br>', '\n')
+        problem = problem.replace('&nbsp;', ' ')
+        problem = problem.replace('&quot;', '"')
+        problem = problem.replace('&amp;', '&')
+        problem = problem.replace('&lt;', '<')
+        problem = problem.replace('&gt;', '>')
+        pos_1 = problem.__len__() - 1
+        pos_2 = problem.__len__() - 1
+        i = problem.__len__() - 1
+        # print(problem)
+        while True:
+            while i >= 0 and problem[i] != '>':
+                i -= 1
+            pos_2 = i
+            while i >= 0 and problem[i] != '<':
+                i -= 1
+            pos_1 = i
+            if i <= 0:
+                break
+            problem = problem[:pos_1] + problem[pos_2 + 1:]
+        # print(problem)
+        string = {'Time Limit', 'Memory Limit', 'Accepted Su'}
+        for s in string:
+            pos = problem.find(s)
+            problem = problem[:pos] + '\n' + problem[pos:]
+        # print(problem)
+        string = {'Problem Description ', 'Input ', 'Output ', 'Sample Input',
+                  'Sample Output', 'Author ', 'Recommend'}
+        for s in string:
+            pos = problem.find(s)
+            off = len(s)
+            problem = problem[:pos + off] + '\n' + problem[pos + off:]
+        # print(problem)
+
+        problem = str(n-1) + '\n' + problem + '\n\n'
+
+        try:
+            file.write(problem)
+        except:
+            file.close()
+            print('buffer is full\n' + str(n-1))
+            file = open('D:\Dalunlun\Documents\Python\problem.txt', 'a')
+            n -= 1
+file.close()
